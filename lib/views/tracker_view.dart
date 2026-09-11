@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../view_models/tracker_view_model.dart';
 import '../models/transaction_category.dart';
 import 'change_categories_view.dart';
+import 'transaction_entry_view.dart';
 
 class TrackerView extends StatefulWidget {
   const TrackerView({super.key});
@@ -28,66 +29,37 @@ class _TrackerViewState extends State<TrackerView> {
     super.dispose();
   }
 
-  // UPDATED: Now it accepts an optional categoryIndex!
-  void _showAmountDialog(
+  Future<void> _showTransactionEntry(
     BuildContext context,
     bool isIncome, {
-    int? categoryIndex,
-  }) {
-    final TextEditingController controller = TextEditingController();
-
-    String? errorText;
-
-    showDialog(
+    required int categoryIndex,
+  }) async {
+    final categories = _viewModel.categoriesFor(isIncome);
+    final result = await showModalBottomSheet<TransactionEntryResult>(
       context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: Text(isIncome ? 'Add Income' : 'Add Expense'),
-              content: TextField(
-                controller: controller,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'Enter amount',
-                  errorText: errorText,
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    final amount = double.tryParse(controller.text.trim());
-
-                    if (amount == null || !amount.isFinite || amount <= 0) {
-                      setDialogState(() {
-                        errorText = 'Enter a valid amount greater than zero';
-                      });
-                      return;
-                    }
-
-                    if (categoryIndex != null) {
-                      if (isIncome) {
-                        _viewModel.addIncomeToCategory(categoryIndex, amount);
-                      } else {
-                        _viewModel.addExpenseToCategory(categoryIndex, amount);
-                      }
-                    }
-
-                    Navigator.pop(dialogContext);
-                  },
-                  child: const Text('Save'),
-                ),
-              ],
-            );
-          },
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return TransactionEntryView(
+          categories: categories,
+          initialCategoryIndex: categoryIndex,
+          isIncome: isIncome,
         );
       },
+    );
+
+    if (result == null) {
+      return;
+    }
+
+    _viewModel.addTransaction(
+      amount: result.amount,
+      isIncome: isIncome,
+      categoryIndex: result.categoryIndex,
+      date: result.date,
+      tag: result.tag,
+      comment: result.comment,
     );
   }
 
@@ -99,7 +71,8 @@ class _TrackerViewState extends State<TrackerView> {
   }) {
     return InkWell(
       // Passes the specific index to the dialog
-      onTap: () => _showAmountDialog(context, isIncome, categoryIndex: index),
+      onTap: () =>
+          _showTransactionEntry(context, isIncome, categoryIndex: index),
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(12),

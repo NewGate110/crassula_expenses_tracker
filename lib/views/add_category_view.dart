@@ -214,7 +214,7 @@ class _AddCategoryViewState extends State<AddCategoryView> {
                 IconButton(
                   icon: const Icon(
                     Icons.add_circle,
-                    color: Color(0xFFC0B3FF),
+                    color: Colors.orangeAccent,
                     size: 36,
                   ),
                   onPressed: _addSubcategory, // Add when tapping the button
@@ -253,7 +253,7 @@ class _AddCategoryViewState extends State<AddCategoryView> {
               height: 56,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFC0B3FF),
+                  backgroundColor: Colors.orangeAccent,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(28),
                   ),
